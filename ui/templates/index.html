@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>S10+ Server Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ S10+ Server Dashboard</h1>
+            <p id="server-ip">Carregando...</p>
+        </div>
+
+        <div class="info">
+            <p><span class="status-indicator status-online"></span> SSH Server: <code>ssh -p 8022 <span id="ssh-ip">Carregando...</span></code></p>
+        </div>
+
+        <div id="error" class="error">
+            <p>Erro ao carregar dados: <span id="error-message"></span></p>
+            <p>Tente atualizar novamente ou verificar os logs do servidor.</p>
+        </div>
+
+        <div id="debug-info" class="debug-info">
+            <p>Informações de diagnóstico:</p>
+            <div id="debug-content"></div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" data-tab="overview">Visão Geral</button>
+            <button class="tab-button" data-tab="hardware">Hardware</button>
+            <button class="tab-button" data-tab="network">Rede</button>
+            <button class="tab-button" data-tab="storage">Armazenamento</button>
+            <button class="tab-button" data-tab="processes">Processos</button>
+        </div>
+
+        <div id="tab-overview" class="tab-content active">
+            <h2 class="section-title">Visão Geral do Sistema</h2>
+            <div id="overview-metrics" class="grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+            
+            <div id="safe-info" class="metric">
+                <h3>🔧 Informações do Sistema</h3>
+                <div id="safe-info-content">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-hardware" class="tab-content">
+            <h2 class="section-title">Informações de Hardware</h2>
+            <div class="grid">
+                <div id="cpu-info" class="metric">
+                    <h3>🔄 CPU</h3>
+                    <div id="cpu-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                    <div id="cpu-chart" class="chart"></div>
+                </div>
+                
+                <div id="memory-info" class="metric">
+                    <h3>💾 Memória</h3>
+                    <div id="memory-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                    <div id="memory-chart" class="chart"></div>
+                </div>
+                
+                <div id="battery-info" class="metric">
+                    <h3>🔋 Bateria</h3>
+                    <div id="battery-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="temperature-info" class="metric">
+                    <h3>🌡️ Temperatura</h3>
+                    <div id="temperature-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-network" class="tab-content">
+            <h2 class="section-title">Informações de Rede</h2>
+            <div class="grid">
+                <div id="network-info" class="metric">
+                    <h3>🌐 Rede</h3>
+                    <div id="network-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="interfaces-info" class="metric">
+                    <h3>🔌 Interfaces</h3>
+                    <div id="interfaces-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="connections-info" class="metric">
+                    <h3>🔄 Conexões</h3>
+                    <div id="connections-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="wifi-info" class="metric">
+                    <h3>📶 WiFi</h3>
+                    <div id="wifi-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-storage" class="tab-content">
+            <h2 class="section-title">Informações de Armazenamento</h2>
+            <div class="grid">
+                <div id="disk-usage" class="metric">
+                    <h3>💽 Uso de Disco</h3>
+                    <div id="disk-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                    <div id="disk-chart" class="chart"></div>
+                </div>
+                
+                <div id="partitions-info" class="metric wide">
+                    <h3>📊 Partições</h3>
+                    <div id="partitions-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-processes" class="tab-content">
+            <h2 class="section-title">Informações de Processos</h2>
+            <div class="grid">
+                <div id="process-summary" class="metric">
+                    <h3>📈 Resumo de Processos</h3>
+                    <div id="process-summary-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="top-processes" class="metric wide">
+                    <h3>🔝 Top Processos</h3>
+                    <div id="top-processes-content">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            Última atualização: <span id="last-updated">Carregando...</span>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="refresh" class="refresh-button">
+                <span class="icon">🔄</span> Atualizar Agora
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>Dashboard v2.0 | Rodando em Termux | © 2025</p>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
