@@ -63,7 +63,7 @@ class BaseHandler(BaseHTTPRequestHandler):
             self.wfile.write(content.encode('utf-8'))
         else:
             # Fallback para template embutido
-            self.wfile.write(b"<html><body><h1>Dashboard S10+</h1><p>Template não encontrado.</p></body></html>")
+            self.wfile.write("<html><body><h1>Dashboard S10+</h1><p>Template nao encontrado.</p></body></html>".encode('utf-8'))
     
     def serve_static_file(self, file_path, content_type):
         """Serve um arquivo estático.
