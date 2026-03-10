@@ -24,14 +24,13 @@ class BaseHandler(BaseHTTPRequestHandler):
     
     def send_json_response(self, data, status=200):
         """Envia resposta JSON padronizada.
-        
+
         Args:
             data: Dados a serem enviados como JSON
             status: Código de status HTTP (padrão: 200)
         """
         self.send_response(status)
         self.send_header('Content-type', 'application/json; charset=utf-8')
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         self.end_headers()
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
@@ -86,18 +85,20 @@ class BaseHandler(BaseHTTPRequestHandler):
     
     def handle_error(self, e):
         """Manipula erros de forma padronizada.
-        
+
         Args:
             e: Exceção capturada
         """
+        logging.error(f"Erro: {str(e)}")
+        logging.error(traceback.format_exc())
+
         error_data = {
-            "error": str(e),
-            "traceback": traceback.format_exc() if Config.DEBUG else None,
+            "error": str(e) if Config.DEBUG else "Erro interno do servidor",
             "timestamp": self.get_timestamp()
         }
-        logging.error(f"Erro: {str(e)}")
         if Config.DEBUG:
-            logging.error(traceback.format_exc())
+            error_data["traceback"] = traceback.format_exc()
+
         self.send_json_response(error_data, 500)
     
     def get_timestamp(self):

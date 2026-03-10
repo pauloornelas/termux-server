@@ -1,3 +1,4 @@
+#!/data/data/com.termux/files/usr/bin/python3
 """
 Ponto de entrada principal para o Dashboard S10+.
 
@@ -5,8 +6,6 @@ Este script inicia um servidor web que fornece uma interface para
 monitoramento de recursos do sistema em um dispositivo Galaxy S10+
 rodando Termux.
 """
-
-#!/data/data/com.termux/files/usr/bin/python3
 
 import os
 import sys

@@ -32,7 +32,8 @@ def run_command(command, timeout=None, shell=False):
     try:
         # Se command for string e shell=False, converte para lista
         if isinstance(command, str) and not shell:
-            command = command.split()
+            import shlex
+            command = shlex.split(command)
             
         result = subprocess.run(
             command,
@@ -65,7 +66,7 @@ def format_bytes(bytes_value, precision=2):
         String formatada com unidade apropriada
     """
     if bytes_value < 0:
-        return "0 B"
+        return f"-{format_bytes(-bytes_value, precision)}"
         
     units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
     

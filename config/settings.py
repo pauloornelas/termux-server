@@ -13,7 +13,7 @@ class Config:
     # Configurações do servidor
     SERVER_PORT = 8080
     SERVER_HOST = "0.0.0.0"
-    DEBUG = True
+    DEBUG = False
     
     # Caminhos de arquivos
     PID_FILE = os.path.expanduser("~/dashboard.pid")
