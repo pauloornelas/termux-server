@@ -54,9 +54,30 @@ class HardwareCollector(BaseCollector):
     def _get_cpu_usage(self):
         """Obtém o uso atual da CPU.
 
+        No Termux, o top reporta valores incorretos (sempre 0% ou 800%idle)
+        porque não tem acesso ao /proc/stat. Usamos ps -eo pcpu para somar
+        o uso real de todos os processos visíveis, normalizado pelo número
+        de cores.
+
         Returns:
             Porcentagem de uso da CPU (0-100) ou None se não conseguir obter
         """
+        # Tentativa 1: ps -eo pcpu (mais confiável no Termux)
+        try:
+            output = self.run_command(
+                "ps -eo pcpu | tail -n +2 | awk '{sum+=$1} END {print sum}'",
+                shell=True, timeout=5
+            )
+            if output:
+                total_usage = float(output.strip())
+                # ps retorna % por core (8 cores = max 800%), normaliza para 0-100
+                cores = os.cpu_count() or 8
+                usage = total_usage / cores
+                return round(min(usage, 100.0), 1)
+        except Exception:
+            pass
+
+        # Tentativa 2: top (funciona em Linux padrão, não no Termux)
         try:
             top_output = self.run_command(['top', '-bn1'], timeout=5)
 
