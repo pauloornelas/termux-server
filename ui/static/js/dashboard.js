@@ -318,20 +318,26 @@ class Dashboard {
         batteryContent.innerHTML = batteryHtml || 'Informações não disponíveis';
 
         // Temperatura
-        if (data.hardware.temperature) {
-            const temperatureContent = document.getElementById('temperature-content');
-            const temps = data.hardware.temperature;
-            let tempHtml = '<ul>';
+        const temperatureContent = document.getElementById('temperature-content');
+        const temps = data.hardware && data.hardware.temperature;
+        const batTemp = battery.temperature;
+        let tempHtml = '';
 
-            for (const [sensor, temp] of Object.entries(temps)) {
-                tempHtml += `<li><strong>${this.esc(sensor)}:</strong> ${this.esc(temp)}°C</li>`;
+        if (temps || batTemp != null) {
+            tempHtml = '<ul>';
+            if (batTemp != null && !isNaN(batTemp)) {
+                tempHtml += `<li><strong>Dispositivo (bateria):</strong> ${this.num(batTemp)}°C</li>`;
             }
-
+            if (temps) {
+                for (const [sensor, temp] of Object.entries(temps)) {
+                    tempHtml += `<li><strong>${this.esc(sensor)}:</strong> ${this.esc(temp)}°C</li>`;
+                }
+            }
             tempHtml += '</ul>';
-            temperatureContent.innerHTML = tempHtml;
         } else {
-            document.getElementById('temperature-content').innerHTML = 'Informações de temperatura não disponíveis';
+            tempHtml = 'Informações de temperatura não disponíveis';
         }
+        temperatureContent.innerHTML = tempHtml;
     }
 
     /**
