@@ -6,6 +6,8 @@ como uptime, hostname e versão do Python.
 """
 
 import os
+import sys
+import socket
 import re
 from datetime import datetime
 
@@ -14,10 +16,10 @@ from core.utils import get_timestamp
 
 class SystemCollector(BaseCollector):
     """Coleta informações gerais do sistema."""
-    
+
     def _collect_data(self):
         """Coleta dados do sistema.
-        
+
         Returns:
             Dicionário com informações do sistema
         """
@@ -30,27 +32,27 @@ class SystemCollector(BaseCollector):
             "current_dir": os.getcwd()
         }
         return data
-    
+
     def _get_uptime(self):
         """Obtém o uptime do sistema.
-        
+
         Returns:
             String com o uptime formatado
         """
         try:
             # Primeira tentativa: comando uptime
             return self.run_command(['uptime'])
-        except:
+        except Exception:
             try:
                 # Segunda tentativa: ler /proc/uptime
                 with open('/proc/uptime', 'r') as f:
                     uptime_seconds = float(f.read().split()[0])
-                    
+
                 # Converter para formato legível
                 days = int(uptime_seconds // 86400)
                 hours = int((uptime_seconds % 86400) // 3600)
                 minutes = int((uptime_seconds % 3600) // 60)
-                
+
                 # Formatar
                 parts = []
                 if days > 0:
@@ -58,34 +60,32 @@ class SystemCollector(BaseCollector):
                 if hours > 0 or days > 0:
                     parts.append(f"{hours} hora{'s' if hours != 1 else ''}")
                 parts.append(f"{minutes} minuto{'s' if minutes != 1 else ''}")
-                
+
                 return "up " + ", ".join(parts)
-            except:
+            except Exception:
                 return "Desconhecido"
-    
+
     def _get_hostname(self):
         """Obtém o nome do host.
-        
+
         Returns:
             String com o nome do host
         """
         try:
             return self.run_command(['hostname'])
-        except:
-            import socket
+        except Exception:
             try:
                 return socket.gethostname()
-            except:
+            except Exception:
                 return "Desconhecido"
-    
+
     def _get_python_version(self):
         """Obtém a versão do Python.
-        
+
         Returns:
             String com a versão do Python
         """
         try:
             return self.run_command(['python', '--version'])
-        except:
-            import sys
+        except Exception:
             return sys.version.split()[0]

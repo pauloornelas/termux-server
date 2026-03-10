@@ -136,14 +136,14 @@ class AndroidCollector(BaseCollector):
                 try:
                     with open('/sys/class/power_supply/battery/capacity', 'r') as f:
                         battery_info["percentage"] = int(f.read().strip())
-                except:
+                except Exception:
                     pass
                 
                 # Verificar status
                 try:
                     with open('/sys/class/power_supply/battery/status', 'r') as f:
                         battery_info["status"] = f.read().strip()
-                except:
+                except Exception:
                     pass
                 
                 # Verificar temperatura
@@ -154,14 +154,14 @@ class AndroidCollector(BaseCollector):
                         if temp > 1000:
                             temp /= 10
                         battery_info["temperature"] = temp / 10
-                except:
+                except Exception:
                     pass
                 
                 # Verificar saúde
                 try:
                     with open('/sys/class/power_supply/battery/health', 'r') as f:
                         battery_info["health"] = f.read().strip()
-                except:
+                except Exception:
                     pass
                 
                 return battery_info

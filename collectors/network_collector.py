@@ -69,11 +69,9 @@ class NetworkCollector(BaseCollector):
     
     def _get_ip_socket(self):
         """Obtém IP usando socket."""
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
     
     def _get_ip_hostname(self):
         """Obtém IP usando hostname -I."""

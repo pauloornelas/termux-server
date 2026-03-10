@@ -56,9 +56,9 @@ class StorageCollector(BaseCollector):
                     percent_str = parts[4].rstrip('%')
                     try:
                         percent_num = float(percent_str)
-                    except:
+                    except (ValueError, TypeError):
                         percent_num = 0
-                        
+
                     return {
                         "total": parts[1],
                         "used": parts[2],
@@ -67,7 +67,7 @@ class StorageCollector(BaseCollector):
                         "percent_num": percent_num,
                         "mount_point": parts[5] if len(parts) >= 6 else "/"
                     }
-            
+
             raise Exception("Não foi possível analisar a saída do comando 'df'")
         except Exception as e:
             # Tenta método alternativo
@@ -130,7 +130,7 @@ class StorageCollector(BaseCollector):
                             percent_str = parts[4].rstrip('%')
                             try:
                                 percent_num = float(percent_str)
-                            except:
+                            except (ValueError, TypeError):
                                 percent_num = 0
                                 
                             partition = {
