@@ -211,6 +211,18 @@ class Dashboard {
             `;
         }
 
+        // Temperatura
+        const batTemp = battery.temperature;
+        if (batTemp != null && !isNaN(batTemp)) {
+            overviewMetrics.innerHTML += `
+                <div class="metric">
+                    <h3>🌡️ Temperatura</h3>
+                    <div class="value">${this.num(batTemp)}°C</div>
+                    <small>Sensor da bateria</small>
+                </div>
+            `;
+        }
+
         // Informações do sistema
         const safeInfoContent = document.getElementById('safe-info-content');
         if (data.system) {
