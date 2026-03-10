@@ -51,39 +51,35 @@ class HardwareCollector(BaseCollector):
         }
         return cpu_info
 
-    def _get_cpu_usage(self):
-        """Obtém o uso atual da CPU.
+    # Armazena a última leitura de time_in_state para calcular delta
+    _last_time_in_state = None
+    _last_time_in_state_time = 0
 
-        No Termux, o top reporta valores incorretos (sempre 0% ou 800%idle)
-        porque não tem acesso ao /proc/stat. Usamos ps -eo pcpu para somar
-        o uso real de todos os processos visíveis, normalizado pelo número
-        de cores.
+    def _get_cpu_usage(self):
+        """Obtém o uso real da CPU via cpufreq/stats/time_in_state.
+
+        No Termux, /proc/stat e top não funcionam corretamente.
+        Usamos time_in_state que mostra quanto tempo cada core passou
+        em cada frequência. Tempo na frequência mínima = idle,
+        tempo em outras frequências = ativo.
 
         Returns:
             Porcentagem de uso da CPU (0-100) ou None se não conseguir obter
         """
-        # Tentativa 1: ps -eo pcpu (mais confiável no Termux)
+        # Tentativa 1: time_in_state (uso real do sistema inteiro)
         try:
-            output = self.run_command(
-                "ps -eo pcpu | tail -n +2 | awk '{sum+=$1} END {print sum}'",
-                shell=True, timeout=5
-            )
-            if output:
-                total_usage = float(output.strip())
-                # ps retorna % por core (8 cores = max 800%), normaliza para 0-100
-                cores = os.cpu_count() or 8
-                usage = total_usage / cores
-                return round(min(usage, 100.0), 1)
+            usage = self._get_cpu_usage_from_time_in_state()
+            if usage is not None:
+                return usage
         except Exception:
             pass
 
-        # Tentativa 2: top (funciona em Linux padrão, não no Termux)
+        # Tentativa 2: top (funciona em Linux padrão)
         try:
             top_output = self.run_command(['top', '-bn1'], timeout=5)
 
             for line in top_output.split('\n'):
                 if '%cpu' in line.lower():
-                    # Formato Termux: "800%cpu  5%user  0%nice  3%sys 792%idle ..."
                     total_match = re.search(r'(\d+)%cpu', line)
                     idle_match = re.search(r'(\d+)%idle', line)
                     if total_match and idle_match:
@@ -93,19 +89,90 @@ class HardwareCollector(BaseCollector):
                             usage = ((total_cpu - idle) / total_cpu) * 100
                             return round(usage, 1)
 
-                    # Formato padrão Linux: "%Cpu(s): 12.5 us, 3.2 sy, ..."
                     match = re.search(r'(\d+\.?\d*)\s*%?\s*us', line)
-                    if match:
-                        return float(match.group(1))
-
-                    # Formato alternativo: "12.5% user"
-                    match = re.search(r'(\d+\.?\d*)\s*%?\s*user', line)
                     if match:
                         return float(match.group(1))
         except Exception:
             pass
 
         return None
+
+    def _get_cpu_usage_from_time_in_state(self):
+        """Calcula uso da CPU comparando duas leituras de time_in_state.
+
+        Cada core tem um arquivo time_in_state com pares (freq, ticks).
+        Tempo na frequência mínima = idle, demais = ativo.
+        Compara com a leitura anterior para obter o delta.
+
+        Returns:
+            Porcentagem de uso (0-100) ou None
+        """
+        import time
+
+        cpu_base = '/sys/devices/system/cpu'
+        if not os.path.exists(cpu_base):
+            return None
+
+        current_reading = {}
+        num_cores = os.cpu_count() or 8
+
+        for i in range(num_cores):
+            tis_path = f'{cpu_base}/cpu{i}/cpufreq/stats/time_in_state'
+            min_path = f'{cpu_base}/cpu{i}/cpufreq/cpuinfo_min_freq'
+
+            if not os.path.exists(tis_path):
+                continue
+
+            try:
+                with open(min_path, 'r') as f:
+                    min_freq = f.read().strip()
+
+                idle_ticks = 0
+                total_ticks = 0
+                with open(tis_path, 'r') as f:
+                    for line in f:
+                        parts = line.split()
+                        if len(parts) == 2:
+                            freq, ticks = parts[0], int(parts[1])
+                            total_ticks += ticks
+                            if freq == min_freq:
+                                idle_ticks = ticks
+
+                current_reading[i] = {'idle': idle_ticks, 'total': total_ticks}
+            except Exception:
+                continue
+
+        if not current_reading:
+            return None
+
+        prev = HardwareCollector._last_time_in_state
+        HardwareCollector._last_time_in_state = current_reading
+        HardwareCollector._last_time_in_state_time = time.time()
+
+        # Primeira leitura: sem delta para comparar
+        if prev is None:
+            return None
+
+        total_active = 0
+        total_delta = 0
+
+        for core_id, cur in current_reading.items():
+            if core_id not in prev:
+                continue
+
+            idle_delta = cur['idle'] - prev[core_id]['idle']
+            total_d = cur['total'] - prev[core_id]['total']
+
+            if total_d > 0:
+                active_delta = total_d - idle_delta
+                total_active += active_delta
+                total_delta += total_d
+
+        if total_delta == 0:
+            return 0.0
+
+        usage = (total_active / total_delta) * 100
+        return round(min(usage, 100.0), 1)
 
     def _get_cpu_cores(self):
         """Obtém informações sobre os cores da CPU.
