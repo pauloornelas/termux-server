@@ -55,26 +55,30 @@ class HardwareCollector(BaseCollector):
         """Obtém o uso atual da CPU.
 
         Returns:
-            Porcentagem de uso da CPU ou None se não conseguir obter
+            Porcentagem de uso da CPU (0-100) ou None se não conseguir obter
         """
         try:
-            # Tentar via top
             top_output = self.run_command(['top', '-bn1'], timeout=5)
 
             for line in top_output.split('\n'):
-                if '%Cpu' in line or 'CPU:' in line:
-                    # Extrair o valor de uso da CPU
-                    match = re.search(r'(\d+\.\d+)%(\s+|)us', line)
+                if '%cpu' in line.lower():
+                    # Formato Termux: "800%cpu  5%user  0%nice  3%sys 792%idle ..."
+                    total_match = re.search(r'(\d+)%cpu', line)
+                    idle_match = re.search(r'(\d+)%idle', line)
+                    if total_match and idle_match:
+                        total_cpu = int(total_match.group(1))
+                        idle = int(idle_match.group(1))
+                        if total_cpu > 0:
+                            usage = ((total_cpu - idle) / total_cpu) * 100
+                            return round(usage, 1)
+
+                    # Formato padrão Linux: "%Cpu(s): 12.5 us, 3.2 sy, ..."
+                    match = re.search(r'(\d+\.?\d*)\s*%?\s*us', line)
                     if match:
                         return float(match.group(1))
 
-                    # Outro formato possível
-                    match = re.search(r'(\d+\.\d+)%(\s+|)user', line)
-                    if match:
-                        return float(match.group(1))
-
-                    # Tenta extrair qualquer porcentagem
-                    match = re.search(r'(\d+\.\d+)%', line)
+                    # Formato alternativo: "12.5% user"
+                    match = re.search(r'(\d+\.?\d*)\s*%?\s*user', line)
                     if match:
                         return float(match.group(1))
         except Exception:
